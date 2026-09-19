@@ -3,7 +3,6 @@
     "private": true,
     "type": "module",
     "scripts": {
-        // "build": "npm --prefix frontEnd_asp_smart run build",
         "dev": "npm --prefix frontEnd_asp_smart run dev",
         "lint": "npm --prefix frontEnd_asp_smart run lint",
         "test:e2e": "npm --prefix frontEnd_asp_smart run test:e2e"
