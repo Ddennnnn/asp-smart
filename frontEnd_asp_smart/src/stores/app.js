@@ -1,0 +1,3 @@
+import { create } from 'zustand'
+export const useApp = create(set => ({ auth: null, branch: '', cart: [], sidebar: false, setAuth: auth => set({ auth }), setBranch: branch => set({ branch, cart: [] }), setSidebar: sidebar => set({ sidebar }), add: p => set(s => ({ cart: s.cart.some(i => i.id === p.id) ? s.cart.map(i => i.id === p.id ? { ...i, quantity: i.quantity + 1 } : i) : [...s.cart, { ...p, quantity: 1 }] })), quantity: (id, quantity) => set(s => ({ cart: quantity < 1 ? s.cart.filter(i => i.id !== id) : s.cart.map(i => i.id === id ? { ...i, quantity } : i) })), clear: () => set({ cart: [] }) }))
+export const allowed = (auth, p) => auth?.permissions?.includes('*') || auth?.permissions?.includes(p)

@@ -1,0 +1,16 @@
+import { useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { Download, FileText } from 'lucide-react'
+import { api, download } from '../api/axios'
+import { useApp, allowed } from '../stores/app'
+import { Button, Field, State, Badge } from '../components/ui'
+import DataTable from '../components/DataTable'
+import { rupiah, label, date } from '../utils/format'
+export default function Reports() {
+ const {branch,auth}=useApp(),[from,setFrom]=useState(''),[to,setTo]=useState(''),[type,setType]=useState(''),[page,setPage]=useState(1),[busy,setBusy]=useState(false)
+ const params={branch_id:branch||undefined,from:from||undefined,to:to||undefined,type:type||undefined,page}
+ const q=useQuery({queryKey:['reports',params],queryFn:()=>api.get('/reports',{params}).then(r=>r.data)})
+ const exportReport=async format=>{setBusy(true);try{await download('/reports/export',{...params,format},`laporan.${format}`)}finally{setBusy(false)}}
+ const columns=[{accessorKey:'reference_number',header:'Referensi'},{accessorKey:'branch_name',header:'Cabang'},{accessorKey:'type',header:'Jenis',cell:i=>label(i.getValue())},{accessorKey:'status',header:'Status',cell:i=><Badge value={i.getValue()}/>},...['revenue','cost','profit'].map((k,i)=>({accessorKey:k,header:['Pendapatan','Biaya','Laba'][i],cell:x=>rupiah(x.getValue())})),{accessorKey:'created_at',header:'Waktu',cell:i=>date(i.getValue())}]
+ return <><div className="page-heading"><div><span className="eyebrow">ANALISIS USAHA</span><h1>Laporan keuangan</h1><p>Pendapatan, biaya, dan laba dari transaksi yang telah dibukukan.</p></div>{allowed(auth,'report.export')&&<div className="actions"><Button disabled={busy} variant="outline" onClick={()=>exportReport('xlsx')}><Download size={16}/>Excel</Button><Button disabled={busy} onClick={()=>exportReport('pdf')}><FileText size={16}/>PDF</Button></div>}</div><div className="panel filters"><Field label="Dari tanggal"><input type="date" value={from} onChange={e=>{setFrom(e.target.value);setPage(1)}}/></Field><Field label="Sampai tanggal"><input type="date" value={to} onChange={e=>{setTo(e.target.value);setPage(1)}}/></Field><Field label="Jenis transaksi"><select value={type} onChange={e=>{setType(e.target.value);setPage(1)}}><option value="">Semua jenis</option>{['sale','digital','cash_withdrawal','money_transfer','account_transfer','purchase','expense','income','reversal'].map(t=><option key={t} value={t}>{label(t)}</option>)}</select></Field></div><State query={q}><div className="stat-grid report-stats">{['revenue','cost','profit'].map((k,i)=><div className="stat-card" key={k}><span>{['Pendapatan','Biaya termasuk pengeluaran','Laba setelah pengeluaran'][i]}</span><strong>{rupiah(q.data?.summary.totals[k])}</strong></div>)}</div><div className="panel"><div className="section-heading padded"><h2>Rincian per jenis</h2></div><DataTable columns={[{accessorKey:'type',header:'Jenis',cell:i=>label(i.getValue())},{accessorKey:'count',header:'Jumlah transaksi'},...columns.slice(4,7)]} data={q.data?.summary.types}/></div><div className="panel spaced"><DataTable columns={columns} data={q.data?.transactions.data} meta={q.data?.transactions} onPage={setPage}/></div></State></>
+}

@@ -1,0 +1,8 @@
+import { useEffect } from 'react'
+import { Link, useParams } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
+import { api } from '../api/axios'
+import { useApp, allowed } from '../stores/app'
+import { State } from '../components/ui'
+import { Building2, ArrowUpRight } from 'lucide-react'
+export default function BranchDetail(){const {id}=useParams(),{auth,setBranch}=useApp(),q=useQuery({queryKey:['branch-detail',id],queryFn:()=>api.get(`/branches/${id}`).then(r=>r.data)});useEffect(()=>{if(q.data)setBranch(id)},[q.data,id,setBranch]);return <State query={q}>{q.data&&<><div className="page-heading"><div><span className="eyebrow">DETAIL CABANG</span><h1>{q.data.branch.name}</h1><p>{q.data.branch.address} · {q.data.branch.city}</p></div><Building2 size={30}/></div><div className="stat-grid"><div className="stat-card"><span>Transaksi tercatat</span><strong>{q.data.transaction_count}</strong></div><div className="stat-card"><span>Karyawan terdaftar</span><strong>{q.data.employee_count}</strong></div></div><div className="quick-grid">{[['Ringkasan','/app','dashboard.view'],['Rekening & kas','/app/manage/financial-accounts','account.view'],['Stok','/app/stock','stock.view'],['Transaksi','/app/transactions','sale.view'],['Pembelian','/app/purchase','purchase.create'],['Rekonsiliasi','/app/reconciliations','account.reconcile'],['Kinerja cabang','/app/reports','report.view'],['Karyawan','/app/users','users.manage']].filter(a=>allowed(auth,a[2])).map(([title,url])=><Link key={title} className="quick-card" to={url}><strong>{title}</strong><ArrowUpRight size={16}/></Link>)}</div></>}</State>}
